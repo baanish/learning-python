@@ -1,4 +1,5 @@
 import random
+import json
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Index, Document, Long, Keyword, Float
 from elasticsearch_dsl.connections import connections
@@ -32,7 +33,7 @@ for x in range(100):
     #weight proportional to height calculated using the BMI formula
     weight = (BMI*height*height)/703
     person = Person(firstName= firstNames[random.randint(0, 9)], lastName= lastNames[random.randint(0, 9)], height= height, BMI= round(BMI, 2), weight= round(weight,2))
-    person.save()
+    #person.save()
     people.append(person)
 
 client = Elasticsearch()
@@ -50,3 +51,12 @@ for hit in response:
 
 for name in response.aggregations.names.buckets:
     print(name.key, name.doc_count)
+
+person = {"firstName": firstNames[random.randint(
+    0, 9)], "lastName": lastNames[random.randint(0, 9)], "height": height, "BMI": round(BMI, 2), "weight": round(weight, 2)}
+client.index(index="aggregrationtest", body=json.dumps(person))
+index = Index("aggregationtest")
+s = index.search(using=client)
+response = s.execute()
+for hit in response:
+    print(hit.meta.score, hit.firstName)
